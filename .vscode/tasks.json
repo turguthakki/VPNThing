@@ -70,7 +70,7 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
-      "detail": "Formats all C# code according to professional coding standards"
+      "detail": "Formats all C# code according to modern coding standards"
     },
     {
       "label": "Format and Build",

@@ -6,7 +6,7 @@
 
 !define APPNAME "VPNThing"
 !define COMPANYNAME "Turgut Hakkı Özdemir"
-!define DESCRIPTION "Professional VPN Management Tool"
+!define DESCRIPTION "VPN Management Tool"
 !define VERSIONMAJOR 1
 !define VERSIONMINOR 0
 !define VERSIONBUILD 0
