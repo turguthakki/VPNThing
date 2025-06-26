@@ -1,0 +1,139 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-Command",
+        "if (Test-Path 'Build') { Remove-Item 'Build' -Recurse -Force }; dotnet build"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ],
+      "detail": "Clean build directory and build the VPNThing project"
+    },
+    {
+      "label": "Run VPNThing from Root",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "VPNThing.csproj"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Runs VPNThing application from the solution root directory"
+    },
+    {
+      "label": "Run VPNThing Console Test",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "VPNThing.csproj",
+        "--",
+        "--console"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Runs VPNThing in console mode for diagnostics"
+    },
+    {
+      "label": "Format Code (SimIO Style)",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "format",
+        "VPNThing.sln",
+        "--verbosity",
+        "normal"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Formats all C# code according to SimIO coding standards"
+    },
+    {
+      "label": "Format and Build",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Format Code (SimIO Style)",
+        "build"
+      ],
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Formats code and then builds the project"
+    },
+    {
+      "label": "Publish Single Executable",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-Command",
+        "if (Test-Path 'Build') { Remove-Item 'Build' -Recurse -Force }; dotnet publish --configuration Release --runtime win-x64 --self-contained true --output Build/publish"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ],
+      "detail": "Creates a maximally optimized single executable file with all dependencies included"
+    },
+    {
+      "label": "Build Installer",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "build-installer.ps1"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Creates a Windows installer (MSI/EXE) and portable ZIP package"
+    },
+    {
+      "label": "Build Installer (Clean)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "build-installer.ps1",
+        "-Clean"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Clean build and create installer package"
+    }
+  ]
+}

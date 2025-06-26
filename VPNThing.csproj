@@ -1,0 +1,83 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <StartupObject>VPNThing.Program</StartupObject>
+    <ApplicationManifest>Configs\app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <!-- Single file executable settings with maximum optimization -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishTrimmed>false</PublishTrimmed>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <!-- Maximum optimization settings -->
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <!-- No localization - exclude ALL satellite assemblies -->
+    <SatelliteResourceLanguages/>
+    <IncludeAllContentForSelfExtract>false</IncludeAllContentForSelfExtract>
+    <GenerateSatelliteAssembliesForCore>false</GenerateSatelliteAssembliesForCore>
+    <DisableSatelliteAssemblyGeneration>true</DisableSatelliteAssemblyGeneration>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" />
+    <PackageReference Include="ModernWpfUI" Version="0.9.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Include="Sources\UI\App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="Sources\UI\MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\**\*" />
+  </ItemGroup>
+  <!-- Prevent satellite assemblies from being created/copied in the first place -->
+  <ItemGroup>
+    <Compile Remove="temp_style_examples\**\*" />
+    <None Include="temp_style_examples\**\*" />
+    <Compile Remove="Temp\**\*" />
+    <None Include="Temp\**\*" />
+  </ItemGroup>
+  <!-- Exclude ALL satellite assemblies from being copied to output -->
+  <Target Name="FilterSatelliteAssemblies" BeforeTargets="CopyFilesToOutputDirectory">
+    <ItemGroup>
+      <!-- Remove satellite assemblies from copy operations using simpler conditions -->
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.DestinationSubDirectory)' != '' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' != 'win-x64\' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' != 'win-x64/'" />
+      <RuntimeCopyLocalItems Remove="@(RuntimeCopyLocalItems)" Condition="'%(RuntimeCopyLocalItems.DestinationSubDirectory)' != '' and '%(RuntimeCopyLocalItems.DestinationSubDirectory)' != 'win-x64\' and '%(RuntimeCopyLocalItems.DestinationSubDirectory)' != 'win-x64/'" />
+      <ResourceCopyLocalItems Remove="@(ResourceCopyLocalItems)" Condition="'%(ResourceCopyLocalItems.DestinationSubDirectory)' != '' and '%(ResourceCopyLocalItems.DestinationSubDirectory)' != 'win-x64\' and '%(ResourceCopyLocalItems.DestinationSubDirectory)' != 'win-x64/'" />
+    </ItemGroup>
+    <Message Text="Filtered out satellite assemblies before copying to output directory" Importance="high" />
+  </Target>
+
+  <!-- Remove satellite assemblies after all copying is done -->
+  <Target Name="RemoveSatelliteAssemblies" AfterTargets="CopyFilesToOutputDirectory">
+    <Exec Command="powershell -Command &quot;Get-ChildItem '$(OutDir)' -Directory | Where-Object { $_.Name -match '^[a-z]{2}(-[A-Za-z0-9]+)*$' } | Remove-Item -Recurse -Force&quot;" ContinueOnError="true" />
+    <Message Text="Removed satellite assembly folders from $(OutDir)" Importance="high" />
+  </Target>
+
+</Project>

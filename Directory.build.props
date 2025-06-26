@@ -1,0 +1,21 @@
+<Project>
+  <!-- Import user-specific settings if they exist -->
+  <Import Project="User.props" Condition="Exists('User.props')"/>
+
+  <!-- Import shared configuration -->
+  <Import Project="Config.props"/>
+
+  <PropertyGroup>
+    <!-- Define build output directory (defaults to solution/Build) -->
+    <BuildDir Condition="'$(BuildDir)'==''">$(SolutionDir)Build</BuildDir>
+
+    <!-- Redirect all build outputs to the build directory -->
+    <OutputPath>$(BuildDir)\bin\$(Configuration)\</OutputPath>
+    <BaseIntermediateOutputPath>$(BuildDir)\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BuildDir)\obj\$(MSBuildProjectName)\$(Configuration)\</IntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BuildDir)\obj\$(MSBuildProjectName)\</MSBuildProjectExtensionsPath>
+
+    <!-- Ensure the build directory exists -->
+    <CreateBuildDir>true</CreateBuildDir>
+  </PropertyGroup>
+</Project>

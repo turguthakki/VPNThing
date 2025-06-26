@@ -1,0 +1,92 @@
+Temp/
+# Out-of-source build directory
+build/
+Build/
+bin/
+obj/
+
+# NuGet packages and restore cache
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# User-specific build configuration
+User.props
+*.user
+*.rsuser
+
+# Visual Studio / VS Code
+.vs/
+.vscode/launch.json
+*.suo
+*.userprefs
+*.sln.docstates
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Application data and sensitive files
+tunnels_store.json
+*.conf
+vpnthing_debug.log
+diagnostics_output.txt
+
+# Generated/temporary build files
+create-icon.ps1
+*.exe
+*.msi
+*.zip
+
+# Installer build outputs
+VPNThing-Setup.exe
+VPNThing-Portable.zip
+
+# WiX Toolset outputs
+*.wixobj
+*.wixpdb
+*.mst
+*.msp
+
+# Windows generated files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Log files
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Test coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# Backup files
+*.backup
+*_backup.*
+*_old.*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db

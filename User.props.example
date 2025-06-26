@@ -1,0 +1,18 @@
+<!--
+  User.props - Optional user-specific build configuration
+  This file is not tracked in git (.gitignore)
+
+  Example customizations:
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Uncomment to change build directory location -->
+    <!-- <BuildDir>C:\MyBuilds\VPNThing</BuildDir> -->
+
+    <!-- Uncomment to enable additional debugging -->
+    <!-- <DebugType>full</DebugType> -->
+
+    <!-- Uncomment to treat warnings as errors -->
+    <!-- <TreatWarningsAsErrors>true</TreatWarningsAsErrors> -->
+  </PropertyGroup>
+</Project>

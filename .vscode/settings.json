@@ -1,0 +1,23 @@
+{
+  // SimIO Coding Style Configuration
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnType": true,
+  "editor.formatOnPaste": true,
+  // C# specific settings
+  "omnisharp.enableEditorConfigSupport": true,
+  "csharp.format.enable": true,
+  // File associations
+  "files.associations": {
+    "*.cs": "csharp"
+  },
+  // Trailing whitespace and final newline
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,  // C# formatting preferences (will be overridden by .editorconfig)
+  "csharp.semanticHighlighting.enabled": true,
+  // Auto-save for better formatting experience
+  "files.autoSave": "onFocusChange"
+}
