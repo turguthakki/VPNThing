@@ -1,77 +1,161 @@
-# VPN Configuration Import Tool
+# VPNThing
 
-A .NET 8 console application that imports Mullvad WireGuard configurations into a tunnels store JSON file with friendly naming.
+A professional WPF application for managing WireGuard VPN connections with a modern graphical interface and advanced features.
+
+## Overview
+
+VPNThing is a .NET 8 Windows Presentation Foundation (WPF) application designed to provide a user-friendly interface for managing WireGuard VPN configurations. It integrates with WireSock VPN Client to offer seamless VPN connection management with location-based organization and visual feedback.
+
+## Features
+
+### 🌐 VPN Management
+- **WireGuard Configuration Import**: Import and manage WireGuard `.conf` files
+- **Location-Based Organization**: Automatic grouping by country and city
+- **Friendly Naming**: Convert technical names to readable format (e.g., `us-nyc-wg-501.conf` → `United States - New York #501`)
+- **Connection Status**: Real-time VPN connection monitoring
+- **Quick Connect**: One-click connection to VPN servers
+
+### 🎨 Modern Interface
+- **Material Design**: Clean, modern WPF interface
+- **Dark/Light Themes**: Automatic and manual theme switching
+- **Responsive Layout**: Adaptive UI for different window sizes
+- **Visual Feedback**: Connection status indicators and progress animations
+- **System Tray Integration**: Minimize to tray functionality
+
+### 🛠 Advanced Features
+- **Location Lookup**: Automatic IP geolocation and country detection
+- **Settings Management**: Persistent application configuration
+- **Debug Logging**: Comprehensive logging for troubleshooting
+- **Privilege Management**: Automatic elevation for VPN operations
+- **Data Directory Management**: Organized storage of configurations and logs
+
+## System Requirements
+
+- **Operating System**: Windows 10/11 (64-bit)
+- **Framework**: .NET 8.0 Runtime
+- **Dependencies**: WireSock VPN Client
+- **Privileges**: Administrator rights (for VPN operations)
+
+## Installation
+
+### Option 1: Windows Installer
+1. Download `VPNThing-Setup.exe` from the releases page
+2. Run the installer as Administrator
+3. Follow the installation wizard
+4. Launch from Start Menu or Desktop shortcut
+
+### Option 2: Portable Version
+1. Download `VPNThing-Portable.zip`
+2. Extract to your preferred location
+3. Run `VPNThing.exe` as Administrator
+
+## Building from Source
+
+### Prerequisites
+- Visual Studio 2022 or VS Code
+- .NET 8.0 SDK
+- Windows 10/11 SDK
+
+### Build Commands
+```powershell
+# Clone the repository
+git clone https://github.com/turguthakki/VPNThing.git
+cd VPNThing
+
+# Build the application
+dotnet build
+
+# Run in development mode
+dotnet run
+
+# Create optimized single executable
+dotnet publish --configuration Release --runtime win-x64 --self-contained true --output Build/publish
+
+# Build installer packages
+pwsh -ExecutionPolicy Bypass -File build-installer.ps1
+```
+
+## Usage
+
+### First Launch
+1. Launch VPNThing as Administrator
+2. Click "Browse" to select your WireGuard configuration directory
+3. Configurations will be automatically imported and organized
+4. Select a server location and click "Connect"
+
+### Managing Connections
+- **Connect**: Click on any server to establish VPN connection
+- **Disconnect**: Click "Disconnect" button or system tray icon
+- **Refresh**: Update server list and connection status
+- **Settings**: Configure application preferences and directories
+
+### Configuration Directory
+By default, VPNThing looks for WireGuard configurations in:
+```
+%USERPROFILE%\Documents\WireGuard\
+```
+
+You can change this location in the application settings.
 
 ## Project Structure
 
 ```
 VPNThing/
-├── build/                          # Out-of-source build directory
-│   ├── bin/Debug/net8.0/          # Compiled application
-│   └── obj/VPNThing/Debug/         # Intermediate build files per project
-├── Mullvad/                        # Mullvad WireGuard .conf files
-├── obj/                            # NuGet package restore files (required at root)
-├── Config.props                    # Shared build configuration
-├── Directory.build.props           # MSBuild properties (auto-imported)
-├── Program.cs                      # Main application code
-├── VPNThing.csproj                # Project file (minimal)
+├── Sources/                        # Source code
+│   ├── Models/                     # Data models and settings
+│   ├── Services/                   # Business logic and VPN management
+│   └── UI/                         # WPF user interface
+├── Resources/                      # Application resources and icons
+├── Configs/                        # Configuration files and manifests
+├── Installer/                      # NSIS installer scripts
+├── Build/                          # Build outputs (generated)
 ├── VPNThing.sln                   # Solution file
-├── tunnels_store.json             # Output JSON file with tunnel configurations
-└── .gitignore                     # Git ignore rules
+└── build-installer.ps1            # Installer build script
 ```
 
-## Features
+## Configuration Files
 
-- **Hierarchical Location Mapping**: Converts country/city codes to friendly names
-- **Out-of-Source Build**: All build artifacts go to `build/` directory using MSBuild `Directory.build.props`
-- **Flattened Solution**: No nested project directories
-- **Friendly Naming**: Converts `us-nyc-wg-501.conf` to `United States - New York #501`
-
-## Building and Running
-
-```powershell
-# Build the project
-dotnet build
-
-# Run the application
-dotnet run
-
-# Clean build outputs
-dotnet clean
+The application stores its data in:
+```
+%APPDATA%\VPNThing\
+├── Configs/                        # Application settings
+├── ServerData/                     # Server and tunnel information
+└── Logs/                          # Debug and error logs
 ```
 
-## Configuration Import
+## Development
 
-The application:
-1. Reads all `.conf` files from the `Mullvad/` directory
-2. Parses WireGuard configuration format
-3. Converts to JSON format with friendly names
-4. Adds/updates entries in `tunnels_store.json`
+### Code Style
+- **Framework**: .NET 8 WPF with MVVM pattern
+- **Language**: C# with modern language features
+- **Formatting**: Consistent 2-space indentation, K&R bracing style
+- **Naming**: camelCase for methods, PascalCase for types
 
-## Example Output
+### VS Code Tasks
+- **Build**: Compile the application
+- **Run**: Execute in development mode
+- **Publish**: Create optimized executable
+- **Format**: Apply code formatting standards
+- **Build Installer**: Generate distribution packages
 
-Input: `us-nyc-wg-501.conf`
-Output: `United States - New York #501`
+## Contributing
 
-## Build Configuration
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes following the coding standards
+4. Test thoroughly on Windows 10/11
+5. Submit a pull request
 
-The project uses **out-of-source builds** following the MSBuild pattern from the SimIO project:
+## License
 
-### Configuration Files:
-- **`Directory.build.props`**: Automatically imported by MSBuild, configures build output paths
-- **`Config.props`**: Shared project settings (version, target framework, etc.)
-- **`User.props`**: Optional user-specific settings (not tracked in git)
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-### Build Outputs:
-- `build/bin/Debug/net8.0/` - Compiled executables and libraries
-- `build/obj/VPNThing/Debug/` - Intermediate compilation files (organized by project name)
+## Acknowledgments
 
-### Benefits:
-- **Clean source tree**: No build artifacts mixed with source code
-- **Centralized configuration**: All build settings in `Directory.build.props`
-- **Project isolation**: Each project gets its own `obj` subdirectory
-- **User customization**: Optional `User.props` for local settings
+- **WireSock VPN Client**: Core VPN functionality
+- **WireGuard**: VPN protocol implementation
+- **Material Design**: UI/UX inspiration
 
-**Note**: A small `obj/` directory remains in the project root containing NuGet package restore files. These files are required by .NET's package management system and cannot be relocated.
+## Support
 
-This approach keeps the project root clean while providing powerful build customization capabilities.
+For issues, questions, or feature requests, please visit the [GitHub Issues](https://github.com/turguthakki/VPNThing/issues) page.

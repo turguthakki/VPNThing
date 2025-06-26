@@ -1,6 +1,6 @@
-# SimIO Coding Style Configuration
+# VPNThing Coding Style Configuration
 
-This document describes the coding style configuration applied to the VPNThing project to match SimIO standards.
+This document describes the coding style configuration applied to the VPNThing project to ensure consistent, professional code formatting.
 
 ## Coding Style Rules
 
@@ -45,7 +45,7 @@ This document describes the coding style configuration applied to the VPNThing p
   ```
 
 ### 5. License Headers
-- All source files include the SimIO-style MIT license header
+- All source files include the standard MIT license header
 - Preserves the "Note: This program was written by an AI agent" notice
 
 ## Configuration Files
@@ -62,7 +62,7 @@ This document describes the coding style configuration applied to the VPNThing p
 
 ### `.vscode/tasks.json`
 - **Build**: Standard dotnet build command
-- **Format Code (SimIO Style)**: Applies consistent formatting using `dotnet format`
+- **Format Code**: Applies consistent formatting using `dotnet format`
 - **Format and Build**: Combines formatting and building in sequence
 
 ## Usage
@@ -74,7 +74,7 @@ This document describes the coding style configuration applied to the VPNThing p
 
 ### Manual Formatting
 1. **Format Current File**: `Alt + Shift + F` (VS Code shortcut)
-2. **Format Entire Project**: Run task "Format Code (SimIO Style)"
+2. **Format Entire Project**: Run task "Format Code"
 3. **Format and Build**: Run task "Format and Build"
 
 ### Commands
@@ -94,7 +94,7 @@ dotnet run --project VPNThing.csproj
 The project builds successfully with 0 errors and 0 warnings, confirming all style changes are syntactically correct and maintain the application's functionality.
 
 ### Key Changes Applied
-1. ✅ License headers updated to SimIO format
+1. ✅ License headers updated to standard MIT format
 2. ✅ Method names converted to camelCase
 3. ✅ Method bracing fixed (new line for methods/classes)
 4. ✅ Object initialization bracing fixed (same line)
@@ -107,13 +107,13 @@ The project builds successfully with 0 errors and 0 warnings, confirming all sty
 
 ## Final Status
 
-**✅ COMPLETE: SimIO Style Conversion Finished**
+**✅ COMPLETE: Coding Style Conversion Finished**
 
-The VPNThing project has been successfully converted to fully comply with SimIO coding standards. All style deviations have been identified and corrected:
+The VPNThing project has been successfully converted to fully comply with professional coding standards. All style deviations have been identified and corrected:
 
 - **Build Status**: ✅ 0 errors, 0 warnings
 - **Formatting**: ✅ Consistent across all files
-- **Style Compliance**: ✅ 100% SimIO standard conformance
+- **Style Compliance**: ✅ 100% professional standard conformance
 - **Automation**: ✅ VS Code tasks and formatting configured
 
 ## Development Workflow
@@ -123,4 +123,4 @@ The VPNThing project has been successfully converted to fully comply with SimIO 
 3. **Build**: Project builds with style validation
 4. **Commit**: Style-consistent code ready for version control
 
-The configuration ensures all future code additions will automatically follow the SimIO coding standards.
+The configuration ensures all future code additions will automatically follow the professional coding standards.

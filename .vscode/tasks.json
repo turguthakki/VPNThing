@@ -56,7 +56,7 @@
       "detail": "Runs VPNThing in console mode for diagnostics"
     },
     {
-      "label": "Format Code (SimIO Style)",
+      "label": "Format Code",
       "type": "shell",
       "command": "dotnet",
       "args": [
@@ -70,13 +70,13 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
-      "detail": "Formats all C# code according to SimIO coding standards"
+      "detail": "Formats all C# code according to professional coding standards"
     },
     {
       "label": "Format and Build",
       "dependsOrder": "sequence",
       "dependsOn": [
-        "Format Code (SimIO Style)",
+        "Format Code",
         "build"
       ],
       "group": "build",

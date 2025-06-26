@@ -42,7 +42,7 @@ namespace VPNThing.Models;
 public class AppSettings
 {
   // -------------------------------------------------------------------------
-  public string sourceDirectory { get; set; } = DataDirectoryManager.DefaultMullvadDirectory;
+  public string sourceDirectory { get; set; } = DataDirectoryManager.DefaultWireGuardDirectory;
   public string wireSockPath { get; set; } = @"C:\Program Files\WireSock VPN Client\bin\wiresock-client.exe";
 
   // -------------------------------------------------------------------------

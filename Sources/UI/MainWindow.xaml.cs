@@ -416,7 +416,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
   private void BrowseSourceDirectory_Click(object sender, RoutedEventArgs e)
   {
     var dialog = new System.Windows.Forms.FolderBrowserDialog();
-    dialog.Description = "Select the directory containing Mullvad WireGuard configuration files";
+    dialog.Description = "Select the directory containing WireGuard configuration files";
     dialog.SelectedPath = _settingsManager.settings.sourceDirectory;
 
     if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)

@@ -46,7 +46,7 @@ public class VPNManager
   readonly LocationLookupService _locationService;
 
   // -------------------------------------------------------------------------
-  public string sourceDirectory { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Mullvad");
+  public string sourceDirectory { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WireGuard");
   public string wireSockPath { get; set; } = @"C:\Program Files\WireSock Secure Connect\bin\wiresock-client.exe";
   public bool isWireSockInstalled { get; private set; }
   // -------------------------------------------------------------------------

@@ -68,12 +68,11 @@ public static class DataDirectoryManager
   /// </summary>
   public static string LogsDirectory => Path.Combine(AppDataDirectory, "Logs");
 
-  /// <summary>
-  /// Gets the default Mullvad configuration directory path
+  /// <summary>  /// Gets the default WireGuard configuration directory path
   /// </summary>
-  public static string DefaultMullvadDirectory => Path.Combine(
-      Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-      "Mullvad"
+  public static string DefaultWireGuardDirectory => Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+    "WireGuard"
   );
 
   /// <summary>

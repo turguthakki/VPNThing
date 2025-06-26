@@ -1,5 +1,5 @@
 {
-  // SimIO Coding Style Configuration
+  // Professional Coding Style Configuration
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
@@ -16,7 +16,7 @@
   // Trailing whitespace and final newline
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true,  // C# formatting preferences (will be overridden by .editorconfig)
+  "files.trimFinalNewlines": true, // C# formatting preferences (will be overridden by .editorconfig)
   "csharp.semanticHighlighting.enabled": true,
   // Auto-save for better formatting experience
   "files.autoSave": "onFocusChange"
