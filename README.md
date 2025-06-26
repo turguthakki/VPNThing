@@ -1,6 +1,6 @@
 # VPNThing
 
-A professional WPF application for managing WireGuard VPN connections with a modern graphical interface and advanced features.
+A WPF application for managing WireGuard VPN connections with a modern graphical interface and advanced features.
 
 ## Overview
 
