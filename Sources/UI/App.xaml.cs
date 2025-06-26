@@ -38,19 +38,23 @@ using MessageBox = System.Windows.MessageBox;
 
 namespace VPNThing.UI;
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// <summary>
+/// Application entry point for the WPF app.
+/// </summary>
 public partial class App : Application
 {
-  private void Application_Startup(object sender, StartupEventArgs e)
+  // -------------------------------------------------------------------------
+  protected override void OnStartup(StartupEventArgs e)
   {
-    try
-    {
+    base.OnStartup(e);
+    try {
       // Initialize application data directories
-      DataDirectoryManager.EnsureDirectoriesExist();
+      DataDirectoryManager.ensureDirectoriesExist();
 
       var currentProcess = Process.GetCurrentProcess();
       var processes = Process.GetProcessesByName(currentProcess.ProcessName);
-      if (processes.Length > 1)
-      {
+      if (processes.Length > 1) {
         MessageBox.Show("VPN Thing is already running. Check the system tray.", "Already Running",
           MessageBoxButton.OK, MessageBoxImage.Information);
         Shutdown();
@@ -58,15 +62,13 @@ public partial class App : Application
       }
 
       var mainWindow = new MainWindow();
-      if (e.Args.Contains("--minimized"))
-      {
+      if (e.Args.Contains("--minimized")) {
         mainWindow.WindowState = WindowState.Minimized;
         mainWindow.ShowInTaskbar = false;
       }
       mainWindow.Show();
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       MessageBox.Show($"Failed to start: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
       Environment.Exit(1);
     }

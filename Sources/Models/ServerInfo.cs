@@ -34,7 +34,7 @@ namespace VPNThing.Models;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
-/// Represents information about a VPN server configuration.
+/// Represents a VPN server.
 /// </summary>
 public class ServerInfo
 {

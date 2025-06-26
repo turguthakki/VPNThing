@@ -43,112 +43,156 @@ using MessageBox = System.Windows.MessageBox;
 
 namespace VPNThing.UI;
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
 /// Main application window with VPN management interface.
 /// </summary>
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
-  private readonly VPNManager _vpnManager;
-  private readonly SettingsManager _settingsManager;
-  private readonly ObservableCollection<ServerInfo> _servers;
-  private bool _isConnected = false;
-  private ServerInfo? _currentServer;
-  private bool _hasAdminPrivileges;
-  private bool _isInitializing = true;
+  // -------------------------------------------------------------------------
+  private readonly VPNManager vpnManager;
+  private readonly SettingsManager settingsManager;
+  private readonly ObservableCollection<ServerInfo> servers;
+  private bool isConnected = false;
+  private ServerInfo? currentServer;
+  private bool hasAdminPrivileges;
+  private bool isInitializing = true;
 
-  public bool IsConnectEnabled => !_isConnected && _servers.Any() && _vpnManager.isWireSockInstalled;
-  public bool IsDisconnectEnabled => _isConnected;
+  // -------------------------------------------------------------------------
+  public bool isConnectEnabled => !isConnected && servers.Any() && vpnManager.isWireSockInstalled;
+  public bool isDisconnectEnabled => isConnected;
 
-  public event PropertyChangedEventHandler? PropertyChanged;
+  // -------------------------------------------------------------------------
+#pragma warning disable 649 // These are set by XAML
+  private System.Windows.Controls.ComboBox? serverComboBox;
+  private System.Windows.Controls.ComboBox? themeComboBox;
+  private System.Windows.Controls.TextBox? sourceDirectoryTextBox;
+  private System.Windows.Controls.TextBox? wireSockPathTextBox;
+  private System.Windows.Controls.CheckBox? startWithWindowsCheckBox;
+  private System.Windows.Controls.CheckBox? autoConnectCheckBox;
+  private System.Windows.Controls.CheckBox? minimizeToTrayCheckBox;
+  private System.Windows.Controls.ListBox? includeProcessesListBox;
+  private System.Windows.Controls.ListBox? excludeProcessesListBox;
+  private System.Windows.Controls.TextBox? includeProcessTextBox;
+  private System.Windows.Controls.TextBox? excludeProcessTextBox;
+  private System.Windows.Controls.Button? connectButton;
+  private System.Windows.Controls.Button? disconnectButton;
+  private System.Windows.Controls.TextBox? logTextBox;
+  private System.Windows.Controls.Border? wireSockStatusBorder;
+  private System.Windows.Controls.TextBlock? wireSockStatusLabel;
+  private System.Windows.Controls.Button? installWireSockButton;
+  private System.Windows.Shapes.Ellipse? statusIndicator;
+  private System.Windows.Controls.TextBlock? statusLabel;
+  private System.Windows.Controls.TextBlock? serverLabel;
+  private Hardcodet.Wpf.TaskbarNotification.TaskbarIcon? trayIcon;
+#pragma warning restore 649
 
+  // -------------------------------------------------------------------------
+  private event PropertyChangedEventHandler? propertyChanged;
+  public event PropertyChangedEventHandler? PropertyChanged { add { propertyChanged += value; } remove { propertyChanged -= value; } }
+
+  // -------------------------------------------------------------------------
   public MainWindow()
   {
     InitializeComponent();
-
+    resolveXamlControls();
     // Ensure window size is properly set
     this.Width = 950;
     this.Height = 650;
     this.MinWidth = 800;
     this.MinHeight = 550;
-
     // Initialize ModernWpf system theme detection first
     // This ensures ModernWpf follows system theme by default
     initializeTheme();
-
-    _vpnManager = new VPNManager();
-    _settingsManager = new SettingsManager();
-    _servers = new ObservableCollection<ServerInfo>();
-
+    vpnManager = new VPNManager();
+    settingsManager = new SettingsManager();
+    servers = new ObservableCollection<ServerInfo>();
     DataContext = this;
-    ServerComboBox.ItemsSource = _servers;
+    serverComboBox!.ItemsSource = servers;
+    initializeAsync();
+  }
 
-    InitializeAsync();
+  // -------------------------------------------------------------------------
+  private void resolveXamlControls()
+  {
+    serverComboBox = (System.Windows.Controls.ComboBox)FindName("ServerComboBox");
+    themeComboBox = (System.Windows.Controls.ComboBox)FindName("ThemeComboBox");
+    sourceDirectoryTextBox = (System.Windows.Controls.TextBox)FindName("SourceDirectoryTextBox");
+    wireSockPathTextBox = (System.Windows.Controls.TextBox)FindName("WireSockPathTextBox");
+    startWithWindowsCheckBox = (System.Windows.Controls.CheckBox)FindName("StartWithWindowsCheckBox");
+    autoConnectCheckBox = (System.Windows.Controls.CheckBox)FindName("AutoConnectCheckBox");
+    minimizeToTrayCheckBox = (System.Windows.Controls.CheckBox)FindName("MinimizeToTrayCheckBox");
+    includeProcessesListBox = (System.Windows.Controls.ListBox)FindName("IncludeProcessesListBox");
+    excludeProcessesListBox = (System.Windows.Controls.ListBox)FindName("ExcludeProcessesListBox");
+    includeProcessTextBox = (System.Windows.Controls.TextBox)FindName("IncludeProcessTextBox");
+    excludeProcessTextBox = (System.Windows.Controls.TextBox)FindName("ExcludeProcessTextBox");
+    connectButton = (System.Windows.Controls.Button)FindName("ConnectButton");
+    disconnectButton = (System.Windows.Controls.Button)FindName("DisconnectButton");
+    logTextBox = (System.Windows.Controls.TextBox)FindName("LogTextBox");
+    wireSockStatusBorder = (System.Windows.Controls.Border)FindName("WireSockStatusBorder");
+    wireSockStatusLabel = (System.Windows.Controls.TextBlock)FindName("WireSockStatusLabel");
+    installWireSockButton = (System.Windows.Controls.Button)FindName("InstallWireSockButton");
+    statusIndicator = (System.Windows.Shapes.Ellipse)FindName("StatusIndicator");
+    statusLabel = (System.Windows.Controls.TextBlock)FindName("StatusLabel");
+    serverLabel = (System.Windows.Controls.TextBlock)FindName("ServerLabel");
+    trayIcon = (Hardcodet.Wpf.TaskbarNotification.TaskbarIcon)FindName("TrayIcon");
   }
 
   // -------------------------------------------------------------------------
   private void initializeTheme()
   {
-    try
-    {            // Initialize with system theme detection and ModernWpf integration
+    try {
+      // Initialize with system theme detection and ModernWpf integration
       ThemeManager.setupModernWpfSystemThemeWatcher();
 
       var isDarkMode = ThemeManager.isSystemDarkMode();
-      LogMessage($"Theme initialized: {(isDarkMode ? "Dark" : "Light")} mode");
+      logMessage($"Theme initialized: {(isDarkMode ? "Dark" : "Light")} mode");
     }
-    catch (Exception ex)
-    {
-      LogMessage($"Failed to initialize theme: {ex.Message}");
+    catch (Exception ex) {
+      logMessage($"Failed to initialize theme: {ex.Message}");
     }
   }
 
   // -------------------------------------------------------------------------
   private void applyThemeFromSettings()
   {
-    try
-    {
-      var preference = _settingsManager.settings.themePreference ?? "System";      // Apply theme using ModernWpf integration
-      if (preference == "System")
-      {
+    try {
+      var preference = settingsManager.settings.themePreference ?? "System";
+      // Apply theme using ModernWpf integration
+      if (preference == "System") {
         ThemeManager.setupModernWpfSystemThemeWatcher();
-      }
-      else
-      {
+      } else {
         ThemeManager.applyModernWpfTheme(preference);
       }
+      ThemeManager.applyModernWpfTheme(preference);
 
       // Update the ComboBox selection to match the preference
-      foreach (ComboBoxItem item in ThemeComboBox.Items)
-      {
-        if (item.Tag.ToString() == preference)
-        {
-          ThemeComboBox.SelectedItem = item;
+      foreach (ComboBoxItem item in themeComboBox!.Items) {
+        if (item.Tag.ToString() == preference) {
+          themeComboBox!.SelectedItem = item;
           break;
         }
       }
 
-      LogMessage($"Applied theme preference: {preference}");
+      logMessage($"Applied theme preference: {preference}");
     }
-    catch (Exception ex)
-    {
-      LogMessage($"Failed to apply theme from settings: {ex.Message}");
+    catch (Exception ex) {
+      logMessage($"Failed to apply theme from settings: {ex.Message}");
     }
   }
 
-  private async void InitializeAsync()
+  // -------------------------------------------------------------------------
+  private async void initializeAsync()
   {
-    try
-    {
-      LogMessage("Initializing VPN Thing...");
+    try {
+      logMessage("Initializing VPN Thing...");
 
       // With requireAdministrator manifest, we should always have admin privileges
-      _hasAdminPrivileges = PrivilegeManager.isRunningAsAdministrator();
-      if (_hasAdminPrivileges)
-      {
-        LogMessage("Running with administrator privileges");
-      }
-      else
-      {
-        LogMessage("ERROR: Application should have been started with administrator privileges");
+      hasAdminPrivileges = PrivilegeManager.isRunningAsAdministrator();
+      if (hasAdminPrivileges) {
+        logMessage("Running with administrator privileges");
+      } else {
+        logMessage("ERROR: Application should have been started with administrator privileges");
         MessageBox.Show(
           "VPN Thing requires administrator privileges and should have prompted for elevation at startup.\n\n" +
           "Please restart the application to ensure proper functionality.",
@@ -158,410 +202,395 @@ public partial class MainWindow : Window, INotifyPropertyChanged
       }
 
       // Load settings
-      await _settingsManager.loadSettingsAsync();
-      ApplySettings();
+      await settingsManager.loadSettingsAsync();
+      applySettings();
 
       // Check WireSock installation
-      await CheckWireSockInstallation();
+      await checkWireSockInstallation();
 
       // Load servers
-      await RefreshServersAsync();
+      await refreshServersAsync();
 
       // Auto-connect if enabled
-      if (_settingsManager.settings.autoConnect && _servers.Any())
-      {
-        var lastServer = _servers.FirstOrDefault(s => s.id == _settingsManager.settings.lastServerId);
-        if (lastServer != null)
-        {
-          ServerComboBox.SelectedItem = lastServer;
-          await ConnectToServerAsync(lastServer);
+      if (settingsManager.settings.autoConnect && servers.Any()) {
+        var lastServer = servers.FirstOrDefault(s => s.id == settingsManager.settings.lastServerId);
+        if (lastServer != null) {
+          serverComboBox!.SelectedItem = lastServer;
+          await connectToServerAsync(lastServer);
         }
       }
 
-      LogMessage("Initialization complete.");
-      _isInitializing = false;
+      logMessage("Initialization complete.");
+      isInitializing = false;
     }
-    catch (Exception ex)
-    {
-      LogMessage($"FATAL ERROR during initialization: {ex.Message}");
+    catch (Exception ex) {
+      logMessage($"FATAL ERROR during initialization: {ex.Message}");
       MessageBox.Show($"VPNThing failed to initialize:\n\n{ex.Message}\n\nStack Trace:\n{ex.StackTrace}",
         "VPNThing Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
     }
   }
 
-  private async Task CheckWireSockInstallation()
+  // -------------------------------------------------------------------------
+  private async Task checkWireSockInstallation()
   {
-    var isInstalled = await _vpnManager.checkWireSockInstallationAsync();
+    var isInstalled = await vpnManager.checkWireSockInstallationAsync();
 
-    if (isInstalled)
-    {
-      WireSockStatusBorder.Background = new SolidColorBrush(Colors.LightGreen);
-      WireSockStatusLabel.Text = $"WireSock VPN Client found at: {_vpnManager.wireSockPath}";
-      InstallWireSockButton.Visibility = Visibility.Collapsed;
-    }
-    else
-    {
-      WireSockStatusBorder.Background = new SolidColorBrush(Colors.LightCoral);
-      WireSockStatusLabel.Text = "WireSock VPN Client not found";
-      InstallWireSockButton.Visibility = Visibility.Visible;
+    if (isInstalled) {
+      wireSockStatusBorder!.Background = new SolidColorBrush(Colors.LightGreen);
+      wireSockStatusLabel!.Text = $"WireSock VPN Client found at: {vpnManager.wireSockPath}";
+      installWireSockButton!.Visibility = Visibility.Collapsed;
+    } else {
+      wireSockStatusBorder!.Background = new SolidColorBrush(Colors.LightCoral);
+      wireSockStatusLabel!.Text = "WireSock VPN Client not found";
+      installWireSockButton!.Visibility = Visibility.Visible;
     }
 
-    UpdateButtonStates();
+    updateButtonStates();
   }
 
-  private void ApplySettings()
+  // -------------------------------------------------------------------------
+  private void applySettings()
   {
-    SourceDirectoryTextBox.Text = _settingsManager.settings.sourceDirectory;
-    WireSockPathTextBox.Text = _settingsManager.settings.wireSockPath;
-    StartWithWindowsCheckBox.IsChecked = _settingsManager.settings.startWithWindows;
-    AutoConnectCheckBox.IsChecked = _settingsManager.settings.autoConnect;
-    MinimizeToTrayCheckBox.IsChecked = _settingsManager.settings.minimizeToTray;
+    sourceDirectoryTextBox!.Text = settingsManager.settings.sourceDirectory;
+    wireSockPathTextBox!.Text = settingsManager.settings.wireSockPath;
+    startWithWindowsCheckBox!.IsChecked = settingsManager.settings.startWithWindows;
+    autoConnectCheckBox!.IsChecked = settingsManager.settings.autoConnect;
+    minimizeToTrayCheckBox!.IsChecked = settingsManager.settings.minimizeToTray;
 
     // Load process lists
-    IncludeProcessesListBox.ItemsSource = _settingsManager.settings.includeProcesses;
-    ExcludeProcessesListBox.ItemsSource = _settingsManager.settings.excludeProcesses;
+    includeProcessesListBox!.ItemsSource = settingsManager.settings.includeProcesses;
+    excludeProcessesListBox!.ItemsSource = settingsManager.settings.excludeProcesses;
 
     // Set VPN manager paths
-    _vpnManager.sourceDirectory = _settingsManager.settings.sourceDirectory;
-    _vpnManager.wireSockPath = _settingsManager.settings.wireSockPath;    // Apply theme from settings
+    vpnManager.sourceDirectory = settingsManager.settings.sourceDirectory;
+    vpnManager.wireSockPath = settingsManager.settings.wireSockPath;    // Apply theme from settings
     applyThemeFromSettings();
   }
 
-  private async Task RefreshServersAsync()
+  // -------------------------------------------------------------------------
+  private async Task refreshServersAsync()
   {
-    try
-    {
-      LogMessage("Loading VPN servers...");
-      var servers = await _vpnManager.loadServersAsync();
+    try {
+      logMessage("Loading VPN servers...");
+      var loadedServers = await vpnManager.loadServersAsync();
 
-      _servers.Clear();
-      foreach (var server in servers)
-      {
-        _servers.Add(server);
+      servers.Clear();
+      foreach (var server in loadedServers) {
+        servers.Add(server);
       }
 
-      LogMessage($"Loaded {_servers.Count} VPN servers.");
-      UpdateButtonStates();
+      logMessage($"Loaded {servers.Count} VPN servers.");
+      updateButtonStates();
     }
-    catch (Exception ex)
-    {
-      LogMessage($"Error loading servers: {ex.Message}");
+    catch (Exception ex) {
+      logMessage($"Error loading servers: {ex.Message}");
       MessageBox.Show($"Error loading servers: {ex.Message}", "Error",
           MessageBoxButton.OK, MessageBoxImage.Error);
     }
   }
 
-  private async Task ConnectToServerAsync(ServerInfo server)
+  // -------------------------------------------------------------------------
+  private async Task connectToServerAsync(ServerInfo server)
   {
-    try
-    {
-      LogMessage($"Connecting to {server.friendlyName}...");
-      StatusLabel.Text = "Connecting...";
-      StatusIndicator.Fill = new SolidColorBrush(Colors.Orange);
+    try {
+      logMessage($"Connecting to {server.friendlyName}...");
+      statusLabel!.Text = "Connecting...";
+      statusIndicator!.Fill = new SolidColorBrush(Colors.Orange);
 
-      var success = await _vpnManager.connectAsync(server, _settingsManager.settings);
+      var success = await vpnManager.connectAsync(server, settingsManager.settings);
 
-      if (success)
-      {
-        _isConnected = true;
-        _currentServer = server;
-        StatusLabel.Text = "Connected";
-        ServerLabel.Text = server.friendlyName;
-        StatusIndicator.Fill = new SolidColorBrush(Colors.Green);
+      if (success) {
+        isConnected = true;
+        currentServer = server;
+        statusLabel!.Text = "Connected";
+        serverLabel!.Text = server.friendlyName;
+        statusIndicator!.Fill = new SolidColorBrush(Colors.Green);
 
-        _settingsManager.settings.lastServerId = server.id;
-        await _settingsManager.saveSettingsAsync();
+        settingsManager.settings.lastServerId = server.id;
+        await settingsManager.saveSettingsAsync();
 
-        LogMessage($"Successfully connected to {server.friendlyName}");
+        logMessage($"Successfully connected to {server.friendlyName}");
 
         // Update tray icon tooltip
-        TrayIcon.ToolTipText = $"VPN Thing - Connected to {server.friendlyName}";
-      }
-      else
-      {
-        StatusLabel.Text = "Connection Failed";
-        StatusIndicator.Fill = new SolidColorBrush(Colors.Red);
-        LogMessage("Connection failed. Check logs for details.");
+        trayIcon!.ToolTipText = $"VPN Thing - Connected to {server.friendlyName}";
+      } else {
+        statusLabel!.Text = "Connection Failed";
+        statusIndicator!.Fill = new SolidColorBrush(Colors.Red);
+        logMessage("Connection failed. Check logs for details.");
       }
     }
-    catch (Exception ex)
-    {
-      StatusLabel.Text = "Connection Error";
-      StatusIndicator.Fill = new SolidColorBrush(Colors.Red);
-      LogMessage($"Connection error: {ex.Message}");
+    catch (Exception ex) {
+      statusLabel!.Text = "Connection Error";
+      statusIndicator!.Fill = new SolidColorBrush(Colors.Red);
+      logMessage($"Connection error: {ex.Message}");
       MessageBox.Show($"Connection error: {ex.Message}", "Connection Error",
           MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
-    UpdateButtonStates();
+    updateButtonStates();
   }
 
-  private async Task DisconnectAsync()
+  // -------------------------------------------------------------------------
+  private async Task disconnectAsync()
   {
-    try
-    {
-      LogMessage("Disconnecting...");
-      StatusLabel.Text = "Disconnecting...";
-      StatusIndicator.Fill = new SolidColorBrush(Colors.Orange);
+    try {
+      logMessage("Disconnecting...");
+      statusLabel!.Text = "Disconnecting...";
+      statusIndicator!.Fill = new SolidColorBrush(Colors.Orange);
 
-      var success = await _vpnManager.disconnectAsync();
+      var success = await vpnManager.disconnectAsync();
 
-      if (success)
-      {
-        _isConnected = false;
-        _currentServer = null;
-        StatusLabel.Text = "Disconnected";
-        ServerLabel.Text = "";
-        StatusIndicator.Fill = new SolidColorBrush(Colors.Red);
-        LogMessage("Successfully disconnected.");
+      if (success) {
+        isConnected = false;
+        currentServer = null;
+        statusLabel!.Text = "Disconnected";
+        serverLabel!.Text = "";
+        statusIndicator!.Fill = new SolidColorBrush(Colors.Red);
+        logMessage("Successfully disconnected.");
 
         // Update tray icon tooltip
-        TrayIcon.ToolTipText = "VPN Thing - Disconnected";
-      }
-      else
-      {
-        LogMessage("Disconnect failed. Check logs for details.");
+        trayIcon!.ToolTipText = "VPN Thing - Disconnected";
+      } else {
+        logMessage("Disconnect failed. Check logs for details.");
       }
     }
-    catch (Exception ex)
-    {
-      LogMessage($"Disconnect error: {ex.Message}");
+    catch (Exception ex) {
+      logMessage($"Disconnect error: {ex.Message}");
     }
 
-    UpdateButtonStates();
+    updateButtonStates();
   }
 
-  private void UpdateButtonStates()
+  // -------------------------------------------------------------------------
+  private void updateButtonStates()
   {
-    ConnectButton.IsEnabled = IsConnectEnabled;
-    DisconnectButton.IsEnabled = IsDisconnectEnabled;
+    connectButton!.IsEnabled = isConnectEnabled;
+    disconnectButton!.IsEnabled = isDisconnectEnabled;
 
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsConnectEnabled)));
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDisconnectEnabled)));
+    propertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(isConnectEnabled)));
+    propertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(isDisconnectEnabled)));
   }
 
-  private void LogMessage(string message)
+  // -------------------------------------------------------------------------
+  private void logMessage(string message)
   {
     var timestamp = DateTime.Now.ToString("HH:mm:ss");
     var logEntry = $"[{timestamp}] {message}";
 
     // Write to file for debugging
-    try
-    {
-      File.AppendAllText("vpnthing_debug.log", logEntry + Environment.NewLine);
+    try {
+      VPNThing.Services.DataDirectoryManager.ensureDirectoriesExist();
+      File.AppendAllText(VPNThing.Services.DataDirectoryManager.debugLogFile, logEntry + Environment.NewLine);
     }
     catch { /* Ignore file write errors */ }
 
     // Write to UI if possible
-    try
-    {
-      Dispatcher.Invoke(() =>
-      {
-        LogTextBox.AppendText(logEntry + "\n");
-        LogTextBox.ScrollToEnd();
+    try {
+      Dispatcher.Invoke(() => {
+        logTextBox!.AppendText(logEntry + "\n");
+        logTextBox!.ScrollToEnd();
       });
     }
     catch { /* Ignore UI errors during startup */ }
   }
 
-  // Event Handlers
-  private async void Connect_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void connectClick(object sender, RoutedEventArgs e)
   {
-    if (ServerComboBox.SelectedItem is ServerInfo server)
-    {
-      await ConnectToServerAsync(server);
+    if (serverComboBox!.SelectedItem is ServerInfo server) {
+      await connectToServerAsync(server);
     }
   }
 
-  private async void Disconnect_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void disconnectClick(object sender, RoutedEventArgs e)
   {
-    await DisconnectAsync();
+    await disconnectAsync();
   }
 
-  private async void RefreshServers_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void refreshServersClick(object sender, RoutedEventArgs e)
   {
-    await RefreshServersAsync();
+    await refreshServersAsync();
   }
 
-  private void InstallWireSock_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void installWireSockClick(object sender, RoutedEventArgs e)
   {
     var result = MessageBox.Show(
         "This will download and install WireSock VPN Client from the official website. Continue?",
         "Install WireSock", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
-    if (result == MessageBoxResult.Yes)
-    {
-      try
-      {
-        LogMessage("Opening WireSock download page...");
-        Process.Start(new ProcessStartInfo
-        {
+    if (result == MessageBoxResult.Yes) {
+      try {
+        logMessage("Opening WireSock download page...");
+        Process.Start(new ProcessStartInfo {
           FileName = "https://www.wiresock.net/downloads/",
           UseShellExecute = true
         });
       }
-      catch (Exception ex)
-      {
+      catch (Exception ex) {
         MessageBox.Show($"Failed to open download page: {ex.Message}", "Error",
             MessageBoxButton.OK, MessageBoxImage.Error);
       }
     }
   }
 
-  private void ServerComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void serverComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
   {
-    UpdateButtonStates();
+    updateButtonStates();
   }
 
-  private void BrowseSourceDirectory_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void browseSourceDirectoryClick(object sender, RoutedEventArgs e)
   {
     var dialog = new System.Windows.Forms.FolderBrowserDialog();
     dialog.Description = "Select the directory containing WireGuard configuration files";
-    dialog.SelectedPath = _settingsManager.settings.sourceDirectory;
+    dialog.SelectedPath = settingsManager.settings.sourceDirectory;
 
-    if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-    {
-      _settingsManager.settings.sourceDirectory = dialog.SelectedPath;
-      SourceDirectoryTextBox.Text = dialog.SelectedPath;
-      _vpnManager.sourceDirectory = dialog.SelectedPath;
-      _ = _settingsManager.saveSettingsAsync();
-      _ = RefreshServersAsync();
+    if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
+      settingsManager.settings.sourceDirectory = dialog.SelectedPath;
+      sourceDirectoryTextBox!.Text = dialog.SelectedPath;
+      vpnManager.sourceDirectory = dialog.SelectedPath;
+      _ = settingsManager.saveSettingsAsync();
+      _ = refreshServersAsync();
     }
   }
 
-  private void BrowseWireSockPath_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void browseWireSockPathClick(object sender, RoutedEventArgs e)
   {
     var dialog = new Microsoft.Win32.OpenFileDialog();
     dialog.Title = "Select WireSock VPN Client executable";
     dialog.Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*";
-    dialog.InitialDirectory = Path.GetDirectoryName(_settingsManager.settings.wireSockPath) ?? @"C:\Program Files";
+    dialog.InitialDirectory = Path.GetDirectoryName(settingsManager.settings.wireSockPath) ?? @"C:\Program Files";
 
-    if (dialog.ShowDialog() == true)
-    {
-      _settingsManager.settings.wireSockPath = dialog.FileName;
-      WireSockPathTextBox.Text = dialog.FileName;
-      _vpnManager.wireSockPath = dialog.FileName;
-      _ = _settingsManager.saveSettingsAsync();
-      _ = CheckWireSockInstallation();
+    if (dialog.ShowDialog() == true) {
+      settingsManager.settings.wireSockPath = dialog.FileName;
+      wireSockPathTextBox!.Text = dialog.FileName;
+      vpnManager.wireSockPath = dialog.FileName;
+      _ = settingsManager.saveSettingsAsync();
+      _ = checkWireSockInstallation();
     }
   }
 
-  private async void StartWithWindows_Changed(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void startWithWindowsChanged(object sender, RoutedEventArgs e)
   {
-    if (_isInitializing)
+    if (isInitializing)
       return;
 
-    _settingsManager.settings.startWithWindows = StartWithWindowsCheckBox.IsChecked ?? false;
-    await _settingsManager.saveSettingsAsync();
-    _settingsManager.updateStartupRegistry();
+    settingsManager.settings.startWithWindows = startWithWindowsCheckBox!.IsChecked ?? false;
+    await settingsManager.saveSettingsAsync();
+    settingsManager.updateStartupRegistry();
   }
 
-  private async void AutoConnect_Changed(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void autoConnectChanged(object sender, RoutedEventArgs e)
   {
-    if (_isInitializing)
+    if (isInitializing)
       return;
 
-    _settingsManager.settings.autoConnect = AutoConnectCheckBox.IsChecked ?? false;
-    await _settingsManager.saveSettingsAsync();
+    settingsManager.settings.autoConnect = autoConnectCheckBox!.IsChecked ?? false;
+    await settingsManager.saveSettingsAsync();
   }
 
-  private async void MinimizeToTray_Changed(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void minimizeToTrayChanged(object sender, RoutedEventArgs e)
   {
-    if (_isInitializing)
+    if (isInitializing)
       return;
 
-    _settingsManager.settings.minimizeToTray = MinimizeToTrayCheckBox.IsChecked ?? false;
-    await _settingsManager.saveSettingsAsync();
+    settingsManager.settings.minimizeToTray = minimizeToTrayCheckBox!.IsChecked ?? false;
+    await settingsManager.saveSettingsAsync();
   }
 
-  private async void UpdateLocations_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void updateLocationsClick(object sender, RoutedEventArgs e)
   {
-    try
-    {
-      LogMessage("Updating location database...");
-      await _vpnManager.updateLocationDatabaseAsync();
-      await RefreshServersAsync();
-      LogMessage("Location database updated successfully.");
+    try {
+      logMessage("Updating location database...");
+      await vpnManager.updateLocationDatabaseAsync();
+      await refreshServersAsync();
+      logMessage("Location database updated successfully.");
     }
-    catch (Exception ex)
-    {
-      LogMessage($"Failed to update locations: {ex.Message}");
+    catch (Exception ex) {
+      logMessage($"Failed to update locations: {ex.Message}");
       MessageBox.Show($"Failed to update locations: {ex.Message}", "Error",
           MessageBoxButton.OK, MessageBoxImage.Error);
     }
   }
 
-  private void AddIncludeProcess_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void addIncludeProcessClick(object sender, RoutedEventArgs e)
   {
-    var processName = IncludeProcessTextBox.Text.Trim();
-    if (!string.IsNullOrEmpty(processName) && !_settingsManager.settings.includeProcesses.Contains(processName))
-    {
-      _settingsManager.settings.includeProcesses.Add(processName);
-      IncludeProcessTextBox.Clear();
-      _ = _settingsManager.saveSettingsAsync();
+    var processName = includeProcessTextBox!.Text.Trim();
+    if (!string.IsNullOrEmpty(processName) && !settingsManager.settings.includeProcesses.Contains(processName)) {
+      settingsManager.settings.includeProcesses.Add(processName);
+      includeProcessTextBox.Clear();
+      _ = settingsManager.saveSettingsAsync();
 
       // Warn if exclude list also has entries
-      if (_settingsManager.settings.excludeProcesses.Any())
-      {
+      if (settingsManager.settings.excludeProcesses.Any()) {
         MessageBox.Show("Note: Include mode takes priority. Exclude list will be ignored when include list has entries.",
             "Split Tunneling Priority", MessageBoxButton.OK, MessageBoxImage.Information);
       }
     }
   }
 
-  private void RemoveIncludeProcess_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void removeIncludeProcessClick(object sender, RoutedEventArgs e)
   {
-    if (IncludeProcessesListBox.SelectedItem is string selectedProcess)
-    {
-      _settingsManager.settings.includeProcesses.Remove(selectedProcess);
-      _ = _settingsManager.saveSettingsAsync();
+    if (includeProcessesListBox!.SelectedItem is string selectedProcess) {
+      settingsManager.settings.includeProcesses.Remove(selectedProcess);
+      _ = settingsManager.saveSettingsAsync();
     }
   }
 
-  private void AddExcludeProcess_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void addExcludeProcessClick(object sender, RoutedEventArgs e)
   {
-    var processName = ExcludeProcessTextBox.Text.Trim();
-    if (!string.IsNullOrEmpty(processName) && !_settingsManager.settings.excludeProcesses.Contains(processName))
-    {
-      _settingsManager.settings.excludeProcesses.Add(processName);
-      ExcludeProcessTextBox.Clear();
-      _ = _settingsManager.saveSettingsAsync();
+    var processName = excludeProcessTextBox!.Text.Trim();
+    if (!string.IsNullOrEmpty(processName) && !settingsManager.settings.excludeProcesses.Contains(processName)) {
+      settingsManager.settings.excludeProcesses.Add(processName);
+      excludeProcessTextBox.Clear();
+      _ = settingsManager.saveSettingsAsync();
     }
   }
 
-  private void RemoveExcludeProcess_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void removeExcludeProcessClick(object sender, RoutedEventArgs e)
   {
-    if (ExcludeProcessesListBox.SelectedItem is string selectedProcess)
-    {
-      _settingsManager.settings.excludeProcesses.Remove(selectedProcess);
-      _ = _settingsManager.saveSettingsAsync();
+    if (excludeProcessesListBox!.SelectedItem is string selectedProcess) {
+      settingsManager.settings.excludeProcesses.Remove(selectedProcess);
+      _ = settingsManager.saveSettingsAsync();
     }
   }
 
+  // -------------------------------------------------------------------------
   // Window and Tray Management
-  private void Window_StateChanged(object sender, EventArgs e)
+  private void windowStateChanged(object sender, EventArgs e)
   {
-    if (WindowState == WindowState.Minimized && (_settingsManager.settings.minimizeToTray))
-    {
+    if (WindowState == WindowState.Minimized && settingsManager.settings.minimizeToTray) {
       Hide();
       ShowInTaskbar = false;
     }
   }
 
-  private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+  // -------------------------------------------------------------------------
+  private void windowClosing(object sender, System.ComponentModel.CancelEventArgs e)
   {
-    if (_settingsManager.settings.minimizeToTray)
-    {
+    if (settingsManager.settings.minimizeToTray) {
       e.Cancel = true;
       WindowState = WindowState.Minimized;
-    }
-    else
-    {
-      TrayIcon.Dispose();
+    } else {
+      trayIcon!.Dispose();
     }
   }
 
-  private void TrayIcon_TrayLeftMouseUp(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void trayIconTrayLeftMouseUp(object sender, RoutedEventArgs e)
   {
     Show();
     WindowState = WindowState.Normal;
@@ -569,7 +598,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     Activate();
   }
 
-  private void TrayOpen_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void trayOpenClick(object sender, RoutedEventArgs e)
   {
     Show();
     WindowState = WindowState.Normal;
@@ -577,53 +607,51 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     Activate();
   }
 
-  private async void TrayConnect_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void trayConnectClick(object sender, RoutedEventArgs e)
   {
-    if (ServerComboBox.SelectedItem is ServerInfo server)
-    {
-      await ConnectToServerAsync(server);
+    if (serverComboBox!.SelectedItem is ServerInfo server) {
+      await connectToServerAsync(server);
     }
   }
 
-  private async void TrayDisconnect_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void trayDisconnectClick(object sender, RoutedEventArgs e)
   {
-    await DisconnectAsync();
+    await disconnectAsync();
   }
 
-  private async void TrayUpdateLocations_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private async void trayUpdateLocationsClick(object sender, RoutedEventArgs e)
   {
-    await _vpnManager.updateLocationDatabaseAsync();
-    await RefreshServersAsync();
+    await vpnManager.updateLocationDatabaseAsync();
+    await refreshServersAsync();
   }
 
-  private void TrayExit_Click(object sender, RoutedEventArgs e)
+  // -------------------------------------------------------------------------
+  private void trayExitClick(object sender, RoutedEventArgs e)
   {
-    _settingsManager.settings.minimizeToTray = false;
+    settingsManager.settings.minimizeToTray = false;
     Close();
   }
+
   // -------------------------------------------------------------------------
-  private async void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+  private async void themeComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
   {
-    if (_isInitializing)
+    if (isInitializing)
       return;
 
-    if (ThemeComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag != null)
-    {
+    if (themeComboBox!.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag != null) {
       var preference = selectedItem.Tag.ToString() ?? "System";
-      _settingsManager.settings.themePreference = preference;      // Apply the new theme using ModernWpf integration
-      if (preference == "System")
-      {
+      settingsManager.settings.themePreference = preference;      // Apply the new theme using ModernWpf integration
+      if (preference == "System") {
         ThemeManager.setupModernWpfSystemThemeWatcher();
-      }
-      else
-      {
+      } else {
         ThemeManager.applyModernWpfTheme(preference);
       }
 
-      await _settingsManager.saveSettingsAsync();
-      LogMessage($"Theme preference changed to: {preference}");
+      await settingsManager.saveSettingsAsync();
+      logMessage($"Theme preference changed to: {preference}");
     }
   }
-
-  // -------------------------------------------------------------------------
 }

@@ -17,7 +17,7 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <PublishReadyToRun>false</PublishReadyToRun>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <InvariantGlobalization>false</InvariantGlobalization>
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
     <IlcOptimizationPreference>Size</IlcOptimizationPreference>
     <!-- Maximum optimization settings -->

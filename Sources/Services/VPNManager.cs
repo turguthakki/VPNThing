@@ -43,16 +43,17 @@ namespace VPNThing.Services;
 public class VPNManager
 {
   // -------------------------------------------------------------------------
-  readonly LocationLookupService _locationService;
+  readonly LocationLookupService locationService;
 
   // -------------------------------------------------------------------------
   public string sourceDirectory { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WireGuard");
   public string wireSockPath { get; set; } = @"C:\Program Files\WireSock Secure Connect\bin\wiresock-client.exe";
   public bool isWireSockInstalled { get; private set; }
+
   // -------------------------------------------------------------------------
   public VPNManager()
   {
-    _locationService = new LocationLookupService();
+    locationService = new LocationLookupService();
   }
 
   // -------------------------------------------------------------------------
@@ -76,10 +77,8 @@ public class VPNManager
       @"C:\Program Files (x86)\WireSock VPN Client\WireSock.exe"
     };
 
-    foreach (var path in possiblePaths)
-    {
-      if (File.Exists(path))
-      {
+    foreach (var path in possiblePaths) {
+      if (File.Exists(path)) {
         wireSockPath = path; // Update to the found path
         isWireSockInstalled = true;
         return true;
@@ -100,21 +99,17 @@ public class VPNManager
 
     var configFiles = Directory.GetFiles(sourceDirectory, "*.conf");
 
-    foreach (var configFile in configFiles)
-    {
-      try
-      {
+    foreach (var configFile in configFiles) {
+      try {
         var fileName = Path.GetFileNameWithoutExtension(configFile);
         var friendlyName = await convertFileNameToFriendlyNameAsync(fileName);
-        servers.Add(new ServerInfo
-        {
+        servers.Add(new ServerInfo {
           id = fileName,
           friendlyName = friendlyName,
           configPath = configFile
         });
       }
-      catch (Exception ex)
-      {
+      catch (Exception ex) {
         // Skip invalid config files
         Console.WriteLine($"Error processing {configFile}: {ex.Message}");
       }
@@ -133,7 +128,7 @@ public class VPNManager
     var cityCode = parts[1];
     var serverNumber = parts[3];
 
-    var countryName = await _locationService.getCountryNameAsync(countryCode);
+    var countryName = await locationService.getCountryNameAsync(countryCode);
     var cityName = getCityName(countryCode, cityCode);
     return $"{countryName} - {cityName} #{serverNumber}";
   }
@@ -141,8 +136,7 @@ public class VPNManager
   // -------------------------------------------------------------------------
   private string getCityName(string countryCode, string cityCode)
   {
-    var cityMap = new Dictionary<string, Dictionary<string, string>>
-    {
+    var cityMap = new Dictionary<string, Dictionary<string, string>> {
       ["al"] = new() { ["tia"] = "Tirana", ["dur"] = "Durrës", ["shk"] = "Shkodër" },
       ["at"] = new() { ["vie"] = "Vienna", ["graz"] = "Graz", ["lnz"] = "Linz" },
       ["au"] = new() { ["adl"] = "Adelaide", ["bne"] = "Brisbane", ["mel"] = "Melbourne", ["per"] = "Perth", ["syd"] = "Sydney", ["cbr"] = "Canberra" },
@@ -206,16 +200,14 @@ public class VPNManager
     if (!isWireSockInstalled)
       return false;
 
-    try
-    {
+    try {
       // Disconnect any existing connections first
       await disconnectAsync();
       await Task.Delay(1000);
 
       // Create a temporary config file with split tunneling settings if needed
       var configPath = server.configPath;
-      if (settings.includeProcesses.Any() || settings.excludeProcesses.Any())
-      {
+      if (settings.includeProcesses.Any() || settings.excludeProcesses.Any()) {
         configPath = await createTemporaryConfigWithSplitTunnelingAsync(server.configPath, settings);
       }
 
@@ -227,19 +219,15 @@ public class VPNManager
             };
 
       // Log split tunneling configuration
-      if (settings.includeProcesses.Any())
-      {
+      if (settings.includeProcesses.Any()) {
         Console.WriteLine($"INFO: Include mode configured for: {string.Join(", ", settings.includeProcesses)}");
         Console.WriteLine("INFO: WireSock split tunneling enabled - only specified processes will use VPN.");
-      }
-      else if (settings.excludeProcesses.Any())
-      {
+      } else if (settings.excludeProcesses.Any()) {
         Console.WriteLine($"INFO: Exclude mode configured for: {string.Join(", ", settings.excludeProcesses)}");
         Console.WriteLine("INFO: WireSock split tunneling enabled - specified processes will bypass VPN.");
       }
 
-      var processInfo = new ProcessStartInfo
-      {
+      var processInfo = new ProcessStartInfo {
         FileName = wireSockPath,
         Arguments = string.Join(" ", arguments),
         UseShellExecute = false,
@@ -253,8 +241,7 @@ public class VPNManager
       await Task.Delay(3000);
 
       // Verify connection success by checking if process is still alive and running
-      if (process != null && !process.HasExited)
-      {
+      if (process != null && !process.HasExited) {
         // Double-check by looking for running wiresock processes
         var runningProcesses = Process.GetProcessesByName("wiresock-client");
         return runningProcesses.Length > 0;
@@ -262,8 +249,7 @@ public class VPNManager
 
       return false;
     }
-    catch (Exception)
-    {
+    catch (Exception) {
       return false;
     }
   }
@@ -271,34 +257,28 @@ public class VPNManager
   // -------------------------------------------------------------------------
   public async Task<bool> disconnectAsync()
   {
-    try
-    {
+    try {
       // Kill all WireSock processes (look for all possible process names)
       var processNames = new[] { "WireSockUI", "wiresock", "wiresock-client" };
       var processes = new List<Process>();
 
-      foreach (var processName in processNames)
-      {
+      foreach (var processName in processNames) {
         processes.AddRange(Process.GetProcessesByName(processName));
       }
 
       // If no processes found, consider it already disconnected
-      if (processes.Count == 0)
-      {
+      if (processes.Count == 0) {
         // Still clean up temporary files
         cleanupTemporaryConfigFiles();
         return true;
       }
 
-      foreach (var process in processes)
-      {
-        try
-        {
+      foreach (var process in processes) {
+        try {
           process.Kill();
           await process.WaitForExitAsync();
         }
-        catch (Exception)
-        {
+        catch (Exception) {
           // Ignore errors when killing processes
         }
       }
@@ -311,8 +291,7 @@ public class VPNManager
 
       return true;
     }
-    catch (Exception)
-    {
+    catch (Exception) {
       return false;
     }
   }
@@ -320,14 +299,13 @@ public class VPNManager
   // -------------------------------------------------------------------------
   public async Task updateLocationDatabaseAsync()
   {
-    await _locationService.forceUpdateDatabaseAsync();
+    await locationService.forceUpdateDatabaseAsync();
   }
 
   // -------------------------------------------------------------------------
   private async Task<string> createTemporaryConfigWithSplitTunnelingAsync(string originalConfigPath, AppSettings settings)
   {
-    try
-    {
+    try {
       // Read the original config file
       var originalConfig = await File.ReadAllTextAsync(originalConfigPath);
 
@@ -337,15 +315,12 @@ public class VPNManager
       // Prepare split tunneling parameters
       var splitTunnelingLines = new List<string>();
 
-      if (settings.includeProcesses.Any())
-      {
+      if (settings.includeProcesses.Any()) {
         // Use AllowedApps for include mode
         var processNames = string.Join(", ", settings.includeProcesses);
         splitTunnelingLines.Add($"AllowedApps = {processNames}");
         Console.WriteLine($"DEBUG: Adding AllowedApps = {processNames}");
-      }
-      else if (settings.excludeProcesses.Any())
-      {
+      } else if (settings.excludeProcesses.Any()) {
         // Use DisallowedApps for exclude mode
         var processNames = string.Join(", ", settings.excludeProcesses);
         splitTunnelingLines.Add($"DisallowedApps = {processNames}");
@@ -358,27 +333,23 @@ public class VPNManager
       var inPeerSection = false;
       var splitTunnelingAdded = false;
 
-      foreach (var line in configLines)
-      {
+      foreach (var line in configLines) {
         modifiedConfig.Add(line);
 
         // Detect [Peer] section
-        if (line.Trim().Equals("[Peer]", StringComparison.OrdinalIgnoreCase))
-        {
+        if (line.Trim().Equals("[Peer]", StringComparison.OrdinalIgnoreCase)) {
           inPeerSection = true;
           continue;
         }
 
         // Add split tunneling parameters after the last line in [Peer] section
-        if (inPeerSection && !splitTunnelingAdded)
-        {
+        if (inPeerSection && !splitTunnelingAdded) {
           // Check if this is the last line in [Peer] section (next line starts with [ or end of file)
           var currentIndex = configLines.IndexOf(line);
           var isLastInPeer = currentIndex == configLines.Count - 1 ||
                            (currentIndex < configLines.Count - 1 && configLines[currentIndex + 1].Trim().StartsWith("["));
 
-          if (isLastInPeer)
-          {
+          if (isLastInPeer) {
             modifiedConfig.AddRange(splitTunnelingLines);
             splitTunnelingAdded = true;
             inPeerSection = false;
@@ -387,8 +358,7 @@ public class VPNManager
       }
 
       // If we didn't find a [Peer] section, add split tunneling at the end
-      if (!splitTunnelingAdded && splitTunnelingLines.Any())
-      {
+      if (!splitTunnelingAdded && splitTunnelingLines.Any()) {
         modifiedConfig.AddRange(splitTunnelingLines);
       }
 
@@ -400,8 +370,7 @@ public class VPNManager
 
       return tempConfigPath;
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"ERROR: Failed to create temporary config file: {ex.Message}");
       // Return original config path if we can't create temporary one
       return originalConfigPath;
@@ -411,26 +380,21 @@ public class VPNManager
   // -------------------------------------------------------------------------
   private void cleanupTemporaryConfigFiles()
   {
-    try
-    {
+    try {
       var tempPath = Path.GetTempPath();
       var tempConfigFiles = Directory.GetFiles(tempPath, "vpnthing_temp_*.conf");
 
-      foreach (var tempFile in tempConfigFiles)
-      {
-        try
-        {
+      foreach (var tempFile in tempConfigFiles) {
+        try {
           File.Delete(tempFile);
           Console.WriteLine($"DEBUG: Deleted temporary config file: {tempFile}");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
           Console.WriteLine($"WARNING: Could not delete temporary config file {tempFile}: {ex.Message}");
         }
       }
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"WARNING: Error during temporary config cleanup: {ex.Message}");
     }
   }

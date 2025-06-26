@@ -34,7 +34,7 @@ namespace VPNThing.Models;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
-/// REST Countries API data models (fallback).
+/// Represents country information for a VPN server.
 /// </summary>
 public class CountryInfo
 {

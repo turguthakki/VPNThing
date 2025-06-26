@@ -36,24 +36,25 @@ namespace VPNThing.Services;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
-/// Manages application themes and detects system dark/light mode preference.
-/// /// </summary>
+/// Handles theme detection and application for the app.
+/// </summary>
 public static class ThemeManager
 {
   // -------------------------------------------------------------------------
+  /// <summary>
+  /// Checks if the system is in dark mode based on Windows registry settings.
+  /// </summary>
+  /// <returns>True if the system is in dark mode, false otherwise.</returns>
   public static bool isSystemDarkMode()
   {
-    try
-    {
+    try {
       // Check Windows 10/11 theme preference
       using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-      if (key?.GetValue("AppsUseLightTheme") is int value)
-      {
+      if (key?.GetValue("AppsUseLightTheme") is int value) {
         return value == 0; // 0 = dark mode, 1 = light mode
       }
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"Failed to detect system theme: {ex.Message}");
     }
 
@@ -61,17 +62,15 @@ public static class ThemeManager
     return false;
   }
 
-
-
   // -------------------------------------------------------------------------
   /// <summary>
   /// Determines if dark mode should be used based on user preference and system settings.
   /// </summary>
-  /// <param name="userPreference">User's theme preference: "System", "Light", or "Dark"</param>  /// <returns>True if dark mode should be used</returns>
+  /// <param name="userPreference">User's theme preference: "System", "Light", or "Dark"</param>
+  /// <returns>True if dark mode should be used</returns>
   public static bool shouldUseDarkMode(string userPreference)
   {
-    return userPreference?.ToLower() switch
-    {
+    return userPreference?.ToLower() switch {
       "dark" => true,
       "light" => false,
       "system" or _ => isSystemDarkMode() // Default to system detection
@@ -85,16 +84,14 @@ public static class ThemeManager
   /// <param name="userPreference">User's theme preference: "System", "Light", or "Dark"</param>
   public static void applyModernWpfTheme(string userPreference)
   {
-    try
-    {
+    try {
       var isDarkMode = shouldUseDarkMode(userPreference);
 
       // Set ModernWpf theme using the correct type
       var theme = isDarkMode ? ModernWpf.ApplicationTheme.Dark : ModernWpf.ApplicationTheme.Light;
       ModernWpf.ThemeManager.Current.ApplicationTheme = theme;
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"Failed to apply ModernWpf theme: {ex.Message}");
     }
   }
@@ -105,13 +102,11 @@ public static class ThemeManager
   /// </summary>
   public static void setupModernWpfSystemThemeWatcher()
   {
-    try
-    {
+    try {
       // Set ModernWpf to follow system theme
       ModernWpf.ThemeManager.Current.ApplicationTheme = null; // null = follow system
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"Failed to set up ModernWpf system theme watcher: {ex.Message}");
     }
   }
@@ -123,12 +118,9 @@ public static class ThemeManager
   /// <param name="userPreference">User's theme preference: "System", "Light", or "Dark"</param>
   public static void applyThemeFromPreference(string? userPreference)
   {
-    if (userPreference?.ToLower() == "system")
-    {
+    if (userPreference?.ToLower() == "system") {
       setupModernWpfSystemThemeWatcher();
-    }
-    else
-    {
+    } else {
       applyModernWpfTheme(userPreference ?? "System");
     }
   }

@@ -39,12 +39,12 @@ namespace VPNThing.Services;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
-/// Manages application settings including persistence and system integration.
+/// Manages application settings, loading, and saving.
 /// </summary>
 public class SettingsManager
 {
   // -------------------------------------------------------------------------
-  readonly string _settingsFile = DataDirectoryManager.SettingsFile;
+  readonly string settingsFile = DataDirectoryManager.settingsFile;
 
   // -------------------------------------------------------------------------
   public AppSettings settings { get; private set; } = new();
@@ -52,16 +52,13 @@ public class SettingsManager
   // -------------------------------------------------------------------------
   public async Task loadSettingsAsync()
   {
-    try
-    {
-      if (File.Exists(_settingsFile))
-      {
-        var json = await File.ReadAllTextAsync(_settingsFile);
+    try {
+      if (File.Exists(settingsFile)) {
+        var json = await File.ReadAllTextAsync(settingsFile);
         settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
       }
     }
-    catch (Exception)
-    {
+    catch (Exception) {
       settings = new AppSettings();
     }
   }
@@ -69,18 +66,16 @@ public class SettingsManager
   // -------------------------------------------------------------------------
   public async Task saveSettingsAsync()
   {
-    try
-    {
-      var directory = Path.GetDirectoryName(_settingsFile);
+    try {
+      var directory = Path.GetDirectoryName(settingsFile);
       if (!Directory.Exists(directory))
         Directory.CreateDirectory(directory!);
 
       var options = new JsonSerializerOptions { WriteIndented = true };
       var json = JsonSerializer.Serialize(settings, options);
-      await File.WriteAllTextAsync(_settingsFile, json);
+      await File.WriteAllTextAsync(settingsFile, json);
     }
-    catch (Exception)
-    {
+    catch (Exception) {
       // Ignore save errors
     }
   }
@@ -88,23 +83,18 @@ public class SettingsManager
   // -------------------------------------------------------------------------
   public void updateStartupRegistry()
   {
-    try
-    {
+    try {
       var keyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
       using var key = Registry.CurrentUser.OpenSubKey(keyPath, true);
 
-      if (settings.startWithWindows)
-      {
+      if (settings.startWithWindows) {
         var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
         key?.SetValue("VPNThing", $"\"{exePath}\" --minimized");
-      }
-      else
-      {
+      } else {
         key?.DeleteValue("VPNThing", false);
       }
     }
-    catch (Exception)
-    {
+    catch (Exception) {
       // Ignore registry errors
     }
   }

@@ -34,16 +34,17 @@ using System.IO;
 
 namespace VPNThing.Services;
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
-/// Manages application data directories and ensures proper user data storage locations.
-/// Follows Windows best practices for application data storage.
+/// Manages application data directories and log files.
 /// </summary>
 public static class DataDirectoryManager
 {
+  // -------------------------------------------------------------------------
   /// <summary>
   /// Gets the main application data directory in user's AppData\Roaming
   /// </summary>
-  public static string AppDataDirectory => Path.Combine(
+  public static string appDataDirectory => Path.Combine(
       Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
       "VPNThing"
   );
@@ -51,26 +52,27 @@ public static class DataDirectoryManager
   /// <summary>
   /// Gets the directory for VPN configuration files
   /// </summary>
-  public static string ConfigDirectory => Path.Combine(AppDataDirectory, "Configs");
+  public static string configDirectory => Path.Combine(appDataDirectory, "Configs");
 
   /// <summary>
   /// Gets the directory for server data and tunnels store
   /// </summary>
-  public static string ServerDataDirectory => Path.Combine(AppDataDirectory, "ServerData");
+  public static string serverDataDirectory => Path.Combine(appDataDirectory, "ServerData");
 
   /// <summary>
   /// Gets the path to the tunnels store JSON file
   /// </summary>
-  public static string TunnelsStoreFile => Path.Combine(ServerDataDirectory, "tunnels_store.json");
+  public static string tunnelsStoreFile => Path.Combine(serverDataDirectory, "tunnels_store.json");
 
   /// <summary>
   /// Gets the directory for application logs
   /// </summary>
-  public static string LogsDirectory => Path.Combine(AppDataDirectory, "Logs");
+  public static string logsDirectory => Path.Combine(appDataDirectory, "Logs");
 
-  /// <summary>  /// Gets the default WireGuard configuration directory path
+  /// <summary>
+  /// Gets the default WireGuard configuration directory path
   /// </summary>
-  public static string DefaultWireGuardDirectory => Path.Combine(
+  public static string defaultWireGuardDirectory => Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
     "WireGuard"
   );
@@ -78,17 +80,15 @@ public static class DataDirectoryManager
   /// <summary>
   /// Ensures all application data directories exist
   /// </summary>
-  public static void EnsureDirectoriesExist()
+  public static void ensureDirectoriesExist()
   {
-    try
-    {
-      Directory.CreateDirectory(AppDataDirectory);
-      Directory.CreateDirectory(ConfigDirectory);
-      Directory.CreateDirectory(ServerDataDirectory);
-      Directory.CreateDirectory(LogsDirectory);
+    try {
+      Directory.CreateDirectory(appDataDirectory);
+      Directory.CreateDirectory(configDirectory);
+      Directory.CreateDirectory(serverDataDirectory);
+      Directory.CreateDirectory(logsDirectory);
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       throw new InvalidOperationException($"Failed to create application data directories: {ex.Message}", ex);
     }
   }
@@ -96,10 +96,10 @@ public static class DataDirectoryManager
   /// <summary>
   /// Gets the path for application settings file
   /// </summary>
-  public static string SettingsFile => Path.Combine(AppDataDirectory, "settings.json");
+  public static string settingsFile => Path.Combine(appDataDirectory, "settings.json");
 
   /// <summary>
   /// Gets the path for debug log file
   /// </summary>
-  public static string DebugLogFile => Path.Combine(LogsDirectory, "vpnthing_debug.log");
+  public static string debugLogFile => Path.Combine(logsDirectory, "vpnthing_debug.log");
 }

@@ -34,7 +34,7 @@ namespace VPNThing.Models;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
-/// GitHub Countries API data models (mledoze/countries repository).
+/// Represents country data from GitHub.
 /// </summary>
 public class GitHubCountryData
 {

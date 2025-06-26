@@ -15,10 +15,10 @@ indent_style = space
 indent_size = 2
 
 # New line preferences
-csharp_new_line_before_open_brace = methods, types, control_blocks, anonymous_methods, lambdas, object_collection_array_initializers, accessors, events, indexers, properties
-csharp_new_line_before_else = true
+csharp_new_line_before_open_brace = methods, types
+csharp_new_line_before_else = false
 csharp_new_line_before_catch = true
-csharp_new_line_before_finally = true
+csharp_new_line_before_finally = false
 csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_members_in_anonymous_types = false
 csharp_new_line_between_query_expression_clauses = true

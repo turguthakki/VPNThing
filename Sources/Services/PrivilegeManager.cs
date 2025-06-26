@@ -39,7 +39,7 @@ namespace VPNThing.Services;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
-/// Manages application privilege elevation and administrator access.
+/// Handles privilege checks and elevation.
 /// </summary>
 public static class PrivilegeManager
 {
@@ -49,14 +49,12 @@ public static class PrivilegeManager
   /// </summary>
   public static bool isRunningAsAdministrator()
   {
-    try
-    {
+    try {
       var identity = WindowsIdentity.GetCurrent();
       var principal = new WindowsPrincipal(identity);
       return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
-    catch
-    {
+    catch {
       return false;
     }
   }
@@ -66,10 +64,8 @@ public static class PrivilegeManager
   /// </summary>
   public static bool restartAsAdministrator(string[]? args = null)
   {
-    try
-    {
-      var processInfo = new ProcessStartInfo
-      {
+    try {
+      var processInfo = new ProcessStartInfo {
         FileName = Process.GetCurrentProcess().MainModule?.FileName ?? "",
         UseShellExecute = true,
         Verb = "runas", // This requests elevation
@@ -79,8 +75,7 @@ public static class PrivilegeManager
       Process.Start(processInfo);
       return true;
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       MessageBox.Show(
         $"Failed to restart with administrator privileges:\n{ex.Message}\n\n" +
         "Please manually run the application as administrator to access VPN functionality.",
@@ -98,8 +93,7 @@ public static class PrivilegeManager
   /// </summary>
   public static bool ensureAdministratorPrivileges(string[]? startupArgs = null)
   {
-    if (isRunningAsAdministrator())
-    {
+    if (isRunningAsAdministrator()) {
       return true;
     }
 
@@ -110,10 +104,8 @@ public static class PrivilegeManager
       MessageBoxButton.YesNo,
       MessageBoxImage.Question);
 
-    if (result == MessageBoxResult.Yes)
-    {
-      if (restartAsAdministrator(startupArgs))
-      {
+    if (result == MessageBoxResult.Yes) {
+      if (restartAsAdministrator(startupArgs)) {
         // Current instance should exit after successful restart
         Application.Current.Shutdown();
         return false; // Indicates current instance should terminate
@@ -148,8 +140,7 @@ public static class PrivilegeManager
   public static bool checkPrivilegeForOperation(string operationName)
   {
     // With requireAdministrator in manifest, we should always have admin privileges
-    if (isRunningAsAdministrator())
-    {
+    if (isRunningAsAdministrator()) {
       return true;
     }
 

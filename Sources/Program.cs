@@ -47,8 +47,7 @@ internal class Program
   [STAThread]
   public static void Main(string[] args)
   {
-    try
-    {
+    try {
       // Set up global exception handling
       AppDomain.CurrentDomain.UnhandledException += onUnhandledException;
 
@@ -56,20 +55,17 @@ internal class Program
       app.DispatcherUnhandledException += onDispatcherUnhandledException;
 
       // This is where it's crashing - let's catch the specific error
-      try
-      {
+      try {
         app.InitializeComponent();
       }
-      catch (Exception ex)
-      {
+      catch (Exception ex) {
         showFatalError("InitializeComponent failed", ex);
         return;
       }
 
       app.Run();
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       showFatalError("Application startup failed", ex);
       Environment.Exit(1);
     }
@@ -78,8 +74,7 @@ internal class Program
   // -------------------------------------------------------------------------
   private static void onUnhandledException(object sender, UnhandledExceptionEventArgs e)
   {
-    if (e.ExceptionObject is Exception ex)
-    {
+    if (e.ExceptionObject is Exception ex) {
       showFatalError("Unhandled application error", ex);
     }
   }
@@ -96,12 +91,10 @@ internal class Program
   {
     var message = $"{title}:\n\n{ex.Message}\n\nStack Trace:\n{ex.StackTrace}";
 
-    try
-    {
+    try {
       MessageBox.Show(message, "VPNThing - Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
     }
-    catch
-    {
+    catch {
       // If MessageBox fails, try console output
       Console.WriteLine($"FATAL ERROR: {message}");
     }

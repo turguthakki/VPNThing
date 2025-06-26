@@ -38,47 +38,44 @@ namespace VPNThing.Services;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// <summary>
-/// Enhanced location lookup service with GitHub integration and fallback.
+/// Provides country and city lookup for VPN servers.
 /// </summary>
 public class LocationLookupService
 {
   // -------------------------------------------------------------------------
-  private static readonly HttpClient _httpClient = new();
-  private Dictionary<string, GitHubCountryData>? _githubCountryDatabase;
-  private Dictionary<string, CountryInfo>? _restCountryDatabase;
-  private readonly string _cacheFile = Path.Combine(Directory.GetCurrentDirectory(), "Configs", "countries_cache.json");
-  private readonly TimeSpan _cacheExpiry = TimeSpan.FromDays(7); // Update weekly
+  private static readonly HttpClient httpClient = new();
+  private Dictionary<string, GitHubCountryData>? githubCountryDatabase;
+  private Dictionary<string, CountryInfo>? restCountryDatabase;
+  private readonly string cacheFile = Path.Combine(Directory.GetCurrentDirectory(), "Configs", "countries_cache.json");
+  private readonly TimeSpan cacheExpiry = TimeSpan.FromDays(7); // Update weekly
 
   // -------------------------------------------------------------------------
   public async Task<Dictionary<string, GitHubCountryData>> loadGitHubCountryDatabaseAsync()
   {
-    if (_githubCountryDatabase != null)
-      return _githubCountryDatabase;
+    if (githubCountryDatabase != null)
+      return githubCountryDatabase;
 
     // Try to load from cache first
     if (await tryLoadFromCacheAsync())
-      return _githubCountryDatabase!;
+      return githubCountryDatabase!;
 
-    try
-    {
+    try {
       Console.WriteLine("Loading country database from GitHub (mledoze/countries)...");
-      var response = await _httpClient.GetStringAsync(
+      var response = await httpClient.GetStringAsync(
         "https://raw.githubusercontent.com/mledoze/countries/master/countries.json");
-      var countries = JsonSerializer.Deserialize<GitHubCountryData[]>(response, new JsonSerializerOptions
-      {
+      var countries = JsonSerializer.Deserialize<GitHubCountryData[]>(response, new JsonSerializerOptions {
         PropertyNameCaseInsensitive = true
       });
 
-      _githubCountryDatabase = countries?.ToDictionary(c => c.cca2.ToLower(), c => c) ?? new();
-      Console.WriteLine($"Loaded {_githubCountryDatabase.Count} countries from GitHub");
+      githubCountryDatabase = countries?.ToDictionary(c => c.cca2.ToLower(), c => c) ?? new();
+      Console.WriteLine($"Loaded {githubCountryDatabase.Count} countries from GitHub");
 
       // Cache the data
       await saveToCacheAsync();
 
-      return _githubCountryDatabase;
+      return githubCountryDatabase;
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"Failed to load from GitHub: {ex.Message}");
       Console.WriteLine("Falling back to REST Countries API...");
       return await loadRESTCountryDatabaseFallbackAsync();
@@ -88,31 +85,27 @@ public class LocationLookupService
   // -------------------------------------------------------------------------
   private async Task<bool> tryLoadFromCacheAsync()
   {
-    try
-    {
-      if (!File.Exists(_cacheFile))
+    try {
+      if (!File.Exists(cacheFile))
         return false;
 
-      var fileInfo = new FileInfo(_cacheFile);
-      if (DateTime.Now - fileInfo.LastWriteTime > _cacheExpiry)
-      {
+      var fileInfo = new FileInfo(cacheFile);
+      if (DateTime.Now - fileInfo.LastWriteTime > cacheExpiry) {
         Console.WriteLine("Cache expired, will fetch fresh data...");
         return false;
       }
 
       Console.WriteLine("Loading country database from cache...");
-      var json = await File.ReadAllTextAsync(_cacheFile);
-      var countries = JsonSerializer.Deserialize<GitHubCountryData[]>(json, new JsonSerializerOptions
-      {
+      var json = await File.ReadAllTextAsync(cacheFile);
+      var countries = JsonSerializer.Deserialize<GitHubCountryData[]>(json, new JsonSerializerOptions {
         PropertyNameCaseInsensitive = true
       });
 
-      _githubCountryDatabase = countries?.ToDictionary(c => c.cca2.ToLower(), c => c) ?? new();
-      Console.WriteLine($"Loaded {_githubCountryDatabase.Count} countries from cache");
+      githubCountryDatabase = countries?.ToDictionary(c => c.cca2.ToLower(), c => c) ?? new();
+      Console.WriteLine($"Loaded {githubCountryDatabase.Count} countries from cache");
       return true;
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"Failed to load from cache: {ex.Message}");
       return false;
     }
@@ -121,21 +114,18 @@ public class LocationLookupService
   // -------------------------------------------------------------------------
   private async Task saveToCacheAsync()
   {
-    try
-    {
-      if (_githubCountryDatabase == null)
+    try {
+      if (githubCountryDatabase == null)
         return;
 
-      var countries = _githubCountryDatabase.Values.ToArray();
-      var json = JsonSerializer.Serialize(countries, new JsonSerializerOptions
-      {
+      var countries = githubCountryDatabase.Values.ToArray();
+      var json = JsonSerializer.Serialize(countries, new JsonSerializerOptions {
         WriteIndented = false
       });
-      await File.WriteAllTextAsync(_cacheFile, json);
+      await File.WriteAllTextAsync(cacheFile, json);
       Console.WriteLine("Country data cached successfully");
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"Failed to cache country data: {ex.Message}");
     }
   }
@@ -143,26 +133,22 @@ public class LocationLookupService
   // -------------------------------------------------------------------------
   private async Task<Dictionary<string, GitHubCountryData>> loadRESTCountryDatabaseFallbackAsync()
   {
-    try
-    {
+    try {
       Console.WriteLine("Loading from REST Countries API as fallback...");
-      var response = await _httpClient.GetStringAsync(
+      var response = await httpClient.GetStringAsync(
         "https://restcountries.com/v3.1/all?fields=name,cca2,cca3,region,subregion,capital");
-      var countries = JsonSerializer.Deserialize<CountryInfo[]>(response, new JsonSerializerOptions
-      {
+      var countries = JsonSerializer.Deserialize<CountryInfo[]>(response, new JsonSerializerOptions {
         PropertyNameCaseInsensitive = true
       });
 
-      _restCountryDatabase = countries?.ToDictionary(c => c.cca2.ToLower(), c => c) ?? new();
+      restCountryDatabase = countries?.ToDictionary(c => c.cca2.ToLower(), c => c) ?? new();
 
       // Convert to GitHub format for consistency
-      _githubCountryDatabase = _restCountryDatabase.ToDictionary(
-        kvp => kvp.Key, kvp => new GitHubCountryData
-        {
+      githubCountryDatabase = restCountryDatabase.ToDictionary(
+        kvp => kvp.Key, kvp => new GitHubCountryData {
           cca2 = kvp.Value.cca2,
           cca3 = kvp.Value.cca3,
-          name = new NameData
-          {
+          name = new NameData {
             common = kvp.Value.name.common,
             official = kvp.Value.name.official
           },
@@ -171,15 +157,14 @@ public class LocationLookupService
           capital = kvp.Value.capital
         });
 
-      Console.WriteLine($"Loaded {_githubCountryDatabase.Count} countries from REST Countries API");
-      return _githubCountryDatabase;
+      Console.WriteLine($"Loaded {githubCountryDatabase.Count} countries from REST Countries API");
+      return githubCountryDatabase;
     }
-    catch (Exception ex)
-    {
+    catch (Exception ex) {
       Console.WriteLine($"Failed to load from REST Countries API: {ex.Message}");
       Console.WriteLine("Using built-in country mapping...");
-      _githubCountryDatabase = new Dictionary<string, GitHubCountryData>();
-      return _githubCountryDatabase;
+      githubCountryDatabase = new Dictionary<string, GitHubCountryData>();
+      return githubCountryDatabase;
     }
   }
 
@@ -187,8 +172,7 @@ public class LocationLookupService
   public async Task<string> getCountryNameAsync(string countryCode)
   {
     var database = await loadGitHubCountryDatabaseAsync();
-    if (database.TryGetValue(countryCode.ToLower(), out var country))
-    {
+    if (database.TryGetValue(countryCode.ToLower(), out var country)) {
       return country.name.common;
     }
 
@@ -200,14 +184,13 @@ public class LocationLookupService
   public async Task forceUpdateDatabaseAsync()
   {
     Console.WriteLine("Forcing database update...");    // Delete cache file to force refresh
-    if (File.Exists(_cacheFile))
-    {
-      File.Delete(_cacheFile);
+    if (File.Exists(cacheFile)) {
+      File.Delete(cacheFile);
     }
 
     // Clear in-memory cache
-    _githubCountryDatabase = null;
-    _restCountryDatabase = null;
+    githubCountryDatabase = null;
+    restCountryDatabase = null;
 
     // Reload fresh data
     await loadGitHubCountryDatabaseAsync();
@@ -216,8 +199,7 @@ public class LocationLookupService
   // -------------------------------------------------------------------------
   private string getFallbackCountryName(string countryCode)
   {
-    var fallbackMap = new Dictionary<string, string>
-    {
+    var fallbackMap = new Dictionary<string, string> {
       ["al"] = "Albania", ["at"] = "Austria", ["au"] = "Australia", ["be"] = "Belgium",
       ["bg"] = "Bulgaria", ["br"] = "Brazil", ["ca"] = "Canada", ["ch"] = "Switzerland",
       ["cl"] = "Chile", ["co"] = "Colombia", ["cy"] = "Cyprus", ["cz"] = "Czech Republic",
